@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAIROS | Graphic Novels</title>
+    <!-- Google Fonts - Typewriter Style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- PDF.js Library for rendering PDF thumbnails and reading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        /* --- RESET & VARIABLES --- */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --accent: #ffffff;
+            --font-heading: 'Special Elite', 'Courier New', monospace;
+            --font-body: 'Courier Prime', 'Courier New', monospace;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { text-decoration: none; color: inherit; transition: var(--transition); }
+        ul { list-style: none; }
+
+        /* --- HEADER --- */
+        header {
+            padding: 1.5rem 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-container img {
+            height: 36px;
+            width: auto;
+        }
+
+        .logo-text {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.02rem;
+        }
+
+        .lang-toggle {
+            display: flex;
+            gap: 0.5rem;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .lang-toggle button {
+            background: transparent;
+            border: 1px solid #444;
+            color: var(--text-muted);
+            padding: 0.4rem 0.75rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .lang-toggle button:hover {
+            border-color: #666;
+            color: var(--text-main);
+        }
+
+        .lang-toggle button.active {
+            background: var(--accent);
+            color: var(--bg-color);
+            border-color: var(--accent);
+        }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            text-align: center;
+            padding: 3rem 1rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: normal;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* --- GALLERY GRID --- */
+        .gallery {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 5% 6rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+            opacity: 0.9;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            opacity: 1;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .card-cover {
+            width: 100%;
+            height: 400px;
+            background: #252525;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-cover img {
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-cover .loading {
+            position: absolute;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .card-cover .loading::after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--text-muted);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .card-cover::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7));
+            pointer-events: none;
+        }
+
+        .card-info { padding: 1.5rem; }
+
+        .card-info h2 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-info .meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .card-info p {
+            font-size: 0.95rem;
+            color: #bbb;
+            margin-bottom: 1.5rem;
+        }
+
+        .read-btn {
+            display: inline-block;
+            border: 1px solid var(--text-muted);
+            padding: 0.5rem 1.5rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+            transition: var(--transition);
+        }
+
+        .card:hover .read-btn {
+            background-color: var(--accent);
+            color: var(--bg-color);
+            border-color: var(--accent);
+        }
+
+        /* --- PDF READER MODAL --- */
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+        }
+
+        .modal.active { display: flex; animation: fadeIn 0.3s ease; }
+
+        .modal-header {
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.9);
+            border-bottom: 1px solid #333;
+        }
+
+        .modal-title {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+        }
+
+        .modal-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .modal-controls button {
+            background: transparent;
+            border: 1px solid #444;
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .modal-controls button:hover {
+            background: #333;
+            border-color: #555;
+        }
+
+        .modal-controls button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            color: #fff;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--accent);
+        }
+
+        .pdf-viewer {
+            flex: 1;
+            width: 100%;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            background: #0a0a0a;
+        }
+
+        .pdf-viewer canvas {
+            max-width: 100%;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+        }
+
+        .pdf-loading {
+            color: var(--text-muted);
+            font-size: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .pdf-loading::after {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--text-muted);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid #333;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Mobile Tweak */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 2.5rem; }
+            .gallery { grid-template-columns: 1fr; }
+            .modal-header { padding: 0.75rem 1rem; }
+            .modal-controls button { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
+            .pdf-viewer { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="logo.webp" alt="Kairos Logo">
+            <span class="logo-text">Kairos Hive</span>
+        </div>
+        <div class="lang-toggle">
+            <button id="lang-en" class="active" onclick="setLanguage('en')">EN</button>
+            <button id="lang-fr" onclick="setLanguage('fr')">FR</button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1 data-en="Mimesis" data-fr="Mimèsis">Graphic Novels</h1>
+        <p data-en="A collection of philopoetic graphic novels exploring dreams, faith, and the architecture of the soul." data-fr="Une collection de romans graphiques philopoétiques explorant les rêves, la foi et l'architecture de l'âme.">A collection of philopoetic graphic novels exploring dreams, faith, and the architecture of the soul.</p>
+    </section>
+
+    <section class="gallery">
+
+        <article class="card" onclick="openReader('comics/babel.pdf', 'Babel: La Prison de Verre')">
+            <div class="card-cover">
+                <img src="covers/babel.webp" alt="Babel: La Prison de Verre" loading="lazy">
+            </div>
+            <div class="card-info">
+                <span class="meta" data-en="Surrealism / Cyberphilosophy" data-fr="Surréalisme / Cyberphilosophie">Surrealism / Cyberphilosophy</span>
+                <h2>Babel: La Prison de Verre</h2>
+                <p data-en="The rainbow of gravity decomposes into blind landscapes. The immortal eye watches from the center of the tower." data-fr="L'arc-en-ciel de la gravité se décompose en paysages aveugles. L'œil immortel observe depuis le centre de la tour.">The rainbow of gravity decomposes into blind landscapes. The immortal eye watches from the center of the tower.</p>
+                <span class="read-btn" data-en="Read" data-fr="Lire">Read</span>
+            </div>
+        </article>
+
+        <article class="card" onclick="openReader('comics/pentimento.pdf', 'Pentimento')">
+            <div class="card-cover">
+                <img src="covers/pentimento.webp" alt="Pentimento" loading="lazy">
+            </div>
+            <div class="card-info">
+                <span class="meta" data-en="Mythopoetic / Dantesque" data-fr="Mythopoétique / Dantesque">Mythopoetic / Dantesque</span>
+                <h2>Pentimento</h2>
+                <p data-en="Molecules of a dream, incanting specters... nostalgia yet to be born. A visual journey into faith and memory." data-fr="Molécules d'un rêve, incantant des spectres... nostalgie encore à naître. Un voyage visuel dans la foi et la mémoire.">Molecules of a dream, incanting specters... nostalgia yet to be born. A visual journey into faith and memory.</p>
+                <span class="read-btn" data-en="Read" data-fr="Lire">Read</span>
+            </div>
+        </article>
+
+        <article class="card" onclick="openReader('comics/nepenthes.pdf', 'Népenthès')">
+            <div class="card-cover">
+                <img src="covers/nepenthes.webp" alt="Népenthès" loading="lazy">
+            </div>
+            <div class="card-info">
+                <span class="meta" data-en="Rituelic story / Soporific" data-fr="Histoire rituélique / Soporifique">Sacred Novel / Sulfuric</span>
+                <h2>Népenthès</h2>
+                <p data-en="A journey through forgotten memories and the waters of oblivion." data-fr="Un voyage à travers les mémoires oubliées et les eaux de l'oubli.">A journey through forgotten memories and the waters of oblivion.</p>
+                <span class="read-btn" data-en="Read" data-fr="Lire">Read</span>
+            </div>
+        </article>
+
+        <article class="card" onclick="openReader('comics/odan.pdf', 'Odan et le Miroir Interdit')">
+            <div class="card-cover">
+                <img src="covers/odan.webp" alt="Odan et le Miroir Interdit" loading="lazy">
+            </div>
+            <div class="card-info">
+                <span class="meta" data-en="Philosophic Tale" data-fr="Conte Philosophique">Philosophic Tale</span>
+                <h2>Odan et le Miroir Interdit</h2>
+                <p data-en="Odan was the first. A tale of crossing the mirror, confronting the Guardian of the Threshold, and finding one's origin." data-fr="Odan fut le premier. Un conte sur la traversée du miroir, l'affrontement du Gardien du Seuil, et la découverte de son origine.">Odan was the first. A tale of crossing the mirror, confronting the Guardian of the Threshold, and finding one's origin.</p>
+                <span class="read-btn" data-en="Read" data-fr="Lire">Read</span>
+            </div>
+        </article>
+
+    </section>
+
+    <footer>
+        <span data-en="&copy; 2025 Kairos Hive. All rights reserved." data-fr="&copy; 2025 Kairos Hive. Tous droits réservés.">&copy; 2025 Kairos Hive. All rights reserved.</span>
+    </footer>
+
+    <div class="modal" id="readerModal">
+        <div class="modal-header">
+            <span class="modal-title" id="modalTitle">Loading...</span>
+            <div class="modal-controls">
+                <button id="prevPage" onclick="changePage(-1)">← <span data-en="Prev" data-fr="Préc">Prev</span></button>
+                <span class="page-info"><span id="currentPage">1</span> / <span id="totalPages">1</span></span>
+                <button id="nextPage" onclick="changePage(1)"><span data-en="Next" data-fr="Suiv">Next</span> →</button>
+                <button onclick="zoomOut()">−</button>
+                <button onclick="zoomIn()">+</button>
+                <span class="modal-close" onclick="closeReader()">&times;</span>
+            </div>
+        </div>
+        <div class="pdf-viewer" id="pdfViewer">
+            <div class="pdf-loading" data-en="Loading PDF..." data-fr="Chargement du PDF...">Loading PDF...</div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const modal = document.getElementById('readerModal');
+        const viewer = document.getElementById('pdfViewer');
+        const modalTitle = document.getElementById('modalTitle');
+        
+        let currentPdf = null;
+        let currentPageNum = 1;
+        let totalPagesNum = 1;
+        let currentScale = 1.5;
+        let currentLang = localStorage.getItem('lang') || 'en';
+
+        // Language switching
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            
+            // Update toggle buttons
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
+            
+            // Update all translatable elements
+            document.querySelectorAll('[data-en][data-fr]').forEach(el => {
+                const text = el.getAttribute(`data-${lang}`);
+                if (text) {
+                    el.innerHTML = text;
+                }
+            });
+
+            // Update HTML lang attribute
+            document.documentElement.lang = lang;
+        }
+
+        // Apply saved language on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setLanguage(currentLang);
+        });
+
+        async function openReader(pdfPath, title) {
+            if (window.innerWidth < 800) {
+                window.open(pdfPath, '_blank');
+                return;
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            modalTitle.textContent = title || 'Reading...';
+            viewer.innerHTML = '<div class="pdf-loading">Loading PDF...</div>';
+
+            try {
+                // Add cache-busting for fresh PDF load
+                const cacheBuster = `?t=${Date.now()}`;
+                currentPdf = await pdfjsLib.getDocument(pdfPath + cacheBuster).promise;
+                totalPagesNum = currentPdf.numPages;
+                currentPageNum = 1;
+                zoomLevel = 1.0; // Reset zoom level for new PDF
+                
+                document.getElementById('totalPages').textContent = totalPagesNum;
+                await renderPage(currentPageNum);
+            } catch (error) {
+                console.error('Error opening PDF:', error);
+                viewer.innerHTML = '<div style="color: #ff6b6b;">Error loading PDF</div>';
+            }
+        }
+
+        // Track zoom level separately from fit-to-screen scale
+        let zoomLevel = 1.0; // 1.0 = fit to screen, >1 = zoomed in, <1 = zoomed out
+
+        async function renderPage(pageNum) {
+            if (!currentPdf) return;
+
+            const page = await currentPdf.getPage(pageNum);
+            
+            // Calculate scale to fit the viewer area for THIS page
+            const viewerRect = viewer.getBoundingClientRect();
+            const viewerHeight = viewerRect.height - 40; // Account for padding
+            const viewerWidth = viewerRect.width - 40;
+            
+            const unscaledViewport = page.getViewport({ scale: 1 });
+            
+            // Calculate fit-to-screen scale for this specific page
+            const scaleX = viewerWidth / unscaledViewport.width;
+            const scaleY = viewerHeight / unscaledViewport.height;
+            const fitScale = Math.min(scaleX, scaleY);
+            
+            // Apply zoom level on top of fit scale
+            currentScale = fitScale * zoomLevel;
+            
+            // Use higher resolution for sharp rendering (minimum 3x for crisp text)
+            const pixelRatio = Math.max(window.devicePixelRatio || 1, 3);
+            const renderScale = currentScale * pixelRatio;
+            const viewport = page.getViewport({ scale: renderScale });
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            // Enable high-quality image rendering
+            context.imageSmoothingEnabled = true;
+            context.imageSmoothingQuality = 'high';
+            
+            // Set canvas size to high-res
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Scale down with CSS for display (use currentScale for display size)
+            const displayViewport = page.getViewport({ scale: currentScale });
+            canvas.style.width = displayViewport.width + 'px';
+            canvas.style.height = displayViewport.height + 'px';
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+            viewer.innerHTML = '';
+            viewer.appendChild(canvas);
+            
+            document.getElementById('currentPage').textContent = pageNum;
+            document.getElementById('prevPage').disabled = pageNum <= 1;
+            document.getElementById('nextPage').disabled = pageNum >= totalPagesNum;
+        }
+
+        function changePage(delta) {
+            const newPage = currentPageNum + delta;
+            if (newPage >= 1 && newPage <= totalPagesNum) {
+                currentPageNum = newPage;
+                renderPage(currentPageNum);
+            }
+        }
+
+        function zoomIn() {
+            zoomLevel = Math.min(zoomLevel + 0.25, 4);
+            renderPage(currentPageNum);
+        }
+
+        function zoomOut() {
+            zoomLevel = Math.max(zoomLevel - 0.25, 0.5);
+            renderPage(currentPageNum);
+        }
+
+        function closeReader() {
+            modal.classList.remove('active');
+            currentPdf = null;
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal if clicking outside the PDF
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal || e.target === viewer) {
+                closeReader();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!modal.classList.contains('active')) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    changePage(-1);
+                    break;
+                case 'ArrowRight':
+                    changePage(1);
+                    break;
+                case 'Escape':
+                    closeReader();
+                    break;
+                case '+':
+                case '=':
+                    zoomIn();
+                    break;
+                case '-':
+                    zoomOut();
+                    break;
+            }
+        });
+    </script>
+
+</body>
+</html>
