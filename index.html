@@ -629,23 +629,34 @@
 
         // Touch swipe support for mobile
         let touchStartX = 0;
+        let touchStartY = 0;
         let touchEndX = 0;
+        let touchEndY = 0;
         
         viewer.addEventListener('touchstart', (e) => {
             touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
         }, { passive: true });
         
         viewer.addEventListener('touchend', (e) => {
             touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
             handleSwipe();
         }, { passive: true });
         
         function handleSwipe() {
-            const swipeThreshold = 50;
-            const diff = touchStartX - touchEndX;
+            // Don't trigger swipe if zoomed in
+            if (zoomLevel > 1.0) return;
             
-            if (Math.abs(diff) > swipeThreshold) {
-                if (diff > 0) {
+            const swipeThreshold = 100; // Increased threshold
+            const verticalThreshold = 75; // Ignore if too much vertical movement
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = Math.abs(touchStartY - touchEndY);
+            
+            // Only trigger if horizontal swipe is dominant
+            if (Math.abs(diffX) > swipeThreshold && diffY < verticalThreshold) {
+                if (diffX > 0) {
                     // Swipe left - next page
                     changePage(1);
                 } else {
