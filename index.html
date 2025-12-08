@@ -352,9 +352,13 @@
         @media (max-width: 600px) {
             .hero h1 { font-size: 2.5rem; }
             .gallery { grid-template-columns: 1fr; }
-            .modal-header { padding: 0.75rem 1rem; }
-            .modal-controls button { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
-            .pdf-viewer { padding: 1rem; }
+            .modal-header { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+            .modal-title { font-size: 1rem; width: 100%; text-align: center; order: 1; }
+            .modal-controls { width: 100%; justify-content: center; order: 2; flex-wrap: wrap; }
+            .modal-controls button { padding: 0.5rem 1rem; font-size: 0.9rem; min-width: 44px; min-height: 44px; }
+            .modal-close { position: absolute; top: 0.5rem; right: 0.5rem; font-size: 2rem; padding: 0.5rem; }
+            .pdf-viewer { padding: 0.5rem; }
+            .page-info { font-size: 0.85rem; }
         }
     </style>
 </head>
@@ -490,11 +494,6 @@
         });
 
         async function openReader(pdfPath, title) {
-            if (window.innerWidth < 800) {
-                window.open(pdfPath, '_blank');
-                return;
-            }
-
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             modalTitle.textContent = title || 'Reading...';
@@ -627,6 +626,34 @@
                     break;
             }
         });
+
+        // Touch swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        viewer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        viewer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Swipe left - next page
+                    changePage(1);
+                } else {
+                    // Swipe right - previous page
+                    changePage(-1);
+                }
+            }
+        }
     </script>
 
 </body>
